@@ -28,13 +28,13 @@ Our solution leverages [Azure Function bindings to Cosmos][8]. lets you write a 
   "event_type": null
 }
 ```
-We can use this event as a trigger, retrieve the corresponding blob mentioned in `data.url` using the [input binding][3] and persist the processed event back to Blob Storage using the [output binding][4] and [cosmos DB][8]. _Although we can use a output binding for cosmos, we will use the python sdk to demonstrate the use of managed identity._
+We can use this event as a trigger, retrieve the corresponding blob mentioned in `data.url` using the [input binding][3] and persist the processed event back to Blob Storage using the [output binding][4] and [cosmos DB][8]. 
 
 By leveraging the power of Bicep, all necessary resources can be easily provisioned and managed with minimal effort. Our solution uses Python for efficient event processing, allowing for quick and easy deployment of sophisticated event processing pipelines.
 
 1. ## 🧰 Prerequisites
 
-   This demo, instructions, scripts and bicep template is designed to be run in `westeurope`. With few or no modifications you can try it out in other regions as well(_Not covered here_).
+   This demo, instructions, scripts and bicep template is designed to be run in `northeurope`. With few or no modifications you can try it out in other regions as well(_Not covered here_).
 
    - 🛠 Azure CLI Installed & Configured - [Get help here](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli)
    - 🛠 Bicep Installed & Configured - [Get help here](https://learn.microsoft.com/en-us/azure/azure-resource-manager/bicep/install)
@@ -144,7 +144,7 @@ By leveraging the power of Bicep, all necessary resources can be easily provisio
      
 1. ## 📒 Conclusion
 
-    Here we have demonstrated trigger Azure functions with http trigger and process blob files. You can extend the solution and configure the function to send the events to other services like Event Hub, Service Bus, or persist them to Cosmos etc.
+    Here we have demonstrated trigger Azure functions with event grid trigger and process blob files. You can extend the solution and configure the function to send the events to other services like Event Hub, Service Bus, etc.
   
 
 1. ## 🧹 CleanUp
