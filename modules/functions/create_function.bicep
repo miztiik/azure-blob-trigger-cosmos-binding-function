@@ -8,9 +8,10 @@ param saName string
 param funcSaName string
 
 param blobContainerName string
-param cosmosDbAccountName string
-param cosmosDbName string
-param cosmosDbContainerName string
+param cosmos_db_accnt_name string
+param cosmos_db_name string
+param cosmos_db_container_name string
+
 
 // Get Storage Account Reference
 resource r_sa 'Microsoft.Storage/storageAccounts@2021-06-01' existing = {
@@ -23,8 +24,8 @@ resource r_sa_1 'Microsoft.Storage/storageAccounts@2021-06-01' existing = {
 }
 
 // Get Cosmos DB Account Ref
-resource r_cosmodbAccnt 'Microsoft.DocumentDB/databaseAccounts@2022-08-15' existing = {
-  name: cosmosDbAccountName
+resource r_cosmos_db_accnt 'Microsoft.DocumentDB/databaseAccounts@2022-08-15' existing = {
+  name: cosmos_db_accnt_name
 }
 
 // Create User-Assigned Identity
@@ -97,10 +98,10 @@ resource r_fnApp_settings 'Microsoft.Web/sites/config@2021-03-01' = {
     WAREHOUSE_STORAGE_CONTAINER: blobContainerName
     SUBSCRIPTION_ID: subscription().subscriptionId
     RESOURCE_GROUP: resourceGroup().name
-    COSMOS_DB_URL: r_cosmodbAccnt.properties.documentEndpoint
-    COSMOS_DB_NAME: cosmosDbName
-    COSMOS_DB_CONTAINER_NAME: cosmosDbContainerName
-    COSMOS_DB_KEY: r_cosmodbAccnt.listConnectionStrings().connectionStrings[0].connectionString
+    COSMOS_DB_URL: r_cosmos_db_accnt.properties.documentEndpoint
+    COSMOS_DB_NAME: cosmos_db_name
+    COSMOS_DB_CONTAINER_NAME: cosmos_db_container_name
+    COSMOS_DB_KEY: r_cosmos_db_accnt.listConnectionStrings().connectionStrings[0].connectionString
     // COSMOS_DB_KEY1: '@Microsoft.KeyVault(VaultName=${keyVault.name};SecretName=CosmosDbConnectionString)'
   }
   dependsOn: [
@@ -291,13 +292,13 @@ resource r_attachBlobOwnerPermsToRole 'Microsoft.Authorization/roleAssignments@2
 
 // Create a custom role definition for Cosmos DB
 resource r_cosmodb_customRoleDef 'Microsoft.DocumentDB/databaseAccounts/sqlRoleDefinitions@2023-04-15' = {
-  parent: r_cosmodbAccnt
-  name:  guid('r_cosmodb_customRole', r_userManagedIdentity.id, r_cosmodbAccnt.id)
+  parent: r_cosmos_db_accnt
+  name:  guid('r_cosmodb_customRole', r_userManagedIdentity.id, r_cosmos_db_accnt.id)
   properties: {
     roleName: 'Miztiik Custom Role to read w Cosmos DB1'
     type: 'CustomRole'
     assignableScopes: [
-      r_cosmodbAccnt.id
+      r_cosmos_db_accnt.id
     ]
     permissions: [
       {
@@ -316,23 +317,23 @@ resource r_cosmodb_customRoleDef 'Microsoft.DocumentDB/databaseAccounts/sqlRoleD
 }
 
 // Assign the custom role to the user-assigned managed identity
-var cosmosDbDataContributorRoleDefinitionId = resourceId('Microsoft.DocumentDB/databaseAccounts/sqlRoleDefinitions', r_cosmodbAccnt.name, '00000000-0000-0000-0000-000000000002')
+var cosmosDbDataContributorRoleDefinitionId = resourceId('Microsoft.DocumentDB/databaseAccounts/sqlRoleDefinitions', r_cosmos_db_accnt.name, '00000000-0000-0000-0000-000000000002')
 resource r_customRoleAssignmentToSysIdentity 'Microsoft.DocumentDB/databaseAccounts/sqlRoleAssignments@2021-04-15' = {
-  name:  guid(r_userManagedIdentity.id, r_cosmodbAccnt.id, cosmosDbDataContributorRoleDefinitionId)
-  parent: r_cosmodbAccnt
+  name:  guid(r_userManagedIdentity.id, r_cosmos_db_accnt.id, cosmosDbDataContributorRoleDefinitionId)
+  parent: r_cosmos_db_accnt
   properties: {
     roleDefinitionId: r_cosmodb_customRoleDef.id
-    scope: r_cosmodbAccnt.id
+    scope: r_cosmos_db_accnt.id
     principalId: r_fnApp.identity.principalId
   }
 }
 
 resource r_customRoleAssignmentToUsrIdentity 'Microsoft.DocumentDB/databaseAccounts/sqlRoleAssignments@2021-04-15' = {
-  name:  guid(r_userManagedIdentity.id, r_cosmodbAccnt.id, 'r_customRoleAssignmentToUsrIdentity')
-  parent: r_cosmodbAccnt
+  name:  guid(r_userManagedIdentity.id, r_cosmos_db_accnt.id, 'r_customRoleAssignmentToUsrIdentity')
+  parent: r_cosmos_db_accnt
   properties: {
     roleDefinitionId: r_cosmodb_customRoleDef.id
-    scope: r_cosmodbAccnt.id
+    scope: r_cosmos_db_accnt.id
     principalId: r_userManagedIdentity.properties.principalId
   }
 
@@ -340,16 +341,16 @@ resource r_customRoleAssignmentToUsrIdentity 'Microsoft.DocumentDB/databaseAccou
 
 
 
-var roleAssignmentId = guid('sql-role-assignment', resourceGroup().id, r_cosmodbAccnt.id)
+var roleAssignmentId = guid('sql-role-assignment', resourceGroup().id, r_cosmos_db_accnt.id)
 
 // Create Cosmos DB Role Assignment for Function App
 resource r_dbRoleAssignment 'Microsoft.DocumentDB/databaseAccounts/sqlRoleAssignments@2022-08-15' = {
   name: roleAssignmentId
-  parent: r_cosmodbAccnt
+  parent: r_cosmos_db_accnt
   properties: {
     principalId: r_fnApp.identity.principalId
-    roleDefinitionId: '/subscriptions/${subscription().subscriptionId}/resourceGroups/${resourceGroup().name}/providers/Microsoft.DocumentDB/databaseAccounts/${r_cosmodbAccnt.name}/sqlRoleDefinitions/00000000-0000-0000-0000-000000000002'
-    scope: r_cosmodbAccnt.id
+    roleDefinitionId: '/subscriptions/${subscription().subscriptionId}/resourceGroups/${resourceGroup().name}/providers/Microsoft.DocumentDB/databaseAccounts/${r_cosmos_db_accnt.name}/sqlRoleDefinitions/00000000-0000-0000-0000-000000000002'
+    scope: r_cosmos_db_accnt.id
   }
 }
 
@@ -357,8 +358,8 @@ resource r_dbRoleAssignment 'Microsoft.DocumentDB/databaseAccounts/sqlRoleAssign
 // Assigned to Function App Managed Identity
 var cosmosContributorRoleDefId = subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '5bd9cd88-fe45-4216-938b-f97437e15450')
 resource r_cosmosFnAppAadRoleAssignment 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = {
-  name: guid(r_cosmodbAccnt.id, r_fnApp.name, cosmosContributorRoleDefId)
-  scope: r_cosmodbAccnt
+  name: guid(r_cosmos_db_accnt.id, r_fnApp.name, cosmosContributorRoleDefId)
+  scope: r_cosmos_db_accnt
   properties: {
     principalId: r_fnApp.identity.principalId
     principalType: 'ServicePrincipal'

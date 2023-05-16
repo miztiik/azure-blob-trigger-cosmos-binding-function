@@ -1,18 +1,18 @@
 
 param deploymentParams object
-param tags object = resourceGroup().tags
+param tags object
 
 param cosmosDbParams object
-// param cosmosAccountName string
-// param cosmosDatabaseName string
-// param cosmosCollectionName string
+
+param appConfigName string
 
 
+var cosmos_db_accnt_name = replace('${deploymentParams.enterprise_name_suffix}-db-account-${deploymentParams.global_uniqueness}', '_', '-')
 
 
 // Create CosmosDB Account
-resource r_cosmosDbAccount 'Microsoft.DocumentDB/databaseAccounts@2022-08-15' = {
-  name: '${cosmosDbParams.cosmosDbNamePrefix}-db-account-${deploymentParams.global_uniqueness}'
+resource r_cosmos_db_account 'Microsoft.DocumentDB/databaseAccounts@2022-08-15' = {
+  name: cosmos_db_accnt_name
   location: deploymentParams.location
   kind: 'GlobalDocumentDB'
   tags: tags
@@ -42,10 +42,10 @@ resource r_cosmosDbAccount 'Microsoft.DocumentDB/databaseAccounts@2022-08-15' = 
 }
 
 // Create CosmosDB Database
-var databaseName = '${cosmosDbParams.cosmosDbNamePrefix}-db-${deploymentParams.global_uniqueness}'
+var databaseName =  '${cosmosDbParams.cosmosDbNamePrefix}-db-${deploymentParams.global_uniqueness}'
 
-resource r_cosmosDb 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases@2021-06-15' = {
-  parent: r_cosmosDbAccount
+resource r_cosmos_db 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases@2021-06-15' = {
+  parent: r_cosmos_db_account
   name: databaseName
   properties: {
     resource: {
@@ -57,9 +57,9 @@ resource r_cosmosDb 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases@2021-06-
 var containerName = '${cosmosDbParams.cosmosDbNamePrefix}-container-${deploymentParams.global_uniqueness}'
 
 // Create CosmosDB Container
-resource r_cosmosDbContainer 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers@2022-08-15' = {
+resource r_cosmos_db_container 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers@2022-08-15' = {
   name: containerName
-  parent: r_cosmosDb
+  parent: r_cosmos_db
   properties: {
     resource: {
       id: containerName
@@ -91,8 +91,44 @@ resource r_cosmosDbContainer 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases
 }
 
 
+// Store the storage account name and primary endpoint in the App Config
+resource r_appConfig 'Microsoft.AppConfiguration/configurationStores@2023-03-01' existing = {
+  name: appConfigName
+}
+
+resource r_db_accnt_Kv 'Microsoft.AppConfiguration/configurationStores/keyValues@2023-03-01' = {
+  parent: r_appConfig
+  name: 'COSMOS_DB_ACCOUNT'
+  properties: {
+    value: r_cosmos_db_account.name
+    contentType: 'text/plain'
+    tags: tags
+  }
+}
+
+resource r_db_name_Kv 'Microsoft.AppConfiguration/configurationStores/keyValues@2023-03-01' = {
+  parent: r_appConfig
+  name: 'COSMOS_DB_NAME'
+  properties: {
+    value: r_cosmos_db.name
+    contentType: 'text/plain'
+    tags: tags
+  }
+}
+
+resource r_db_container_name_Kv 'Microsoft.AppConfiguration/configurationStores/keyValues@2023-03-01' = {
+  parent: r_appConfig
+  name: 'COSMOS_DB_CONTAINER_NAME'
+  properties: {
+    value: r_cosmos_db_container.name
+    contentType: 'text/plain'
+    tags: tags
+  }
+}
+
+
 // Outputs
-output cosmosDbAccountName string = r_cosmosDbAccount.name
-output cosmosDbName string = r_cosmosDb.name
-output cosmosDbContainerName string = r_cosmosDbContainer.name
+output cosmos_db_accnt_name string = r_cosmos_db_account.name
+output cosmos_db_name string = r_cosmos_db.name
+output cosmos_db_container_name string = r_cosmos_db_container.name
 
