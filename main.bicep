@@ -5,6 +5,8 @@ targetScope = 'resourceGroup'
 
 // Parameters
 param deploymentParams object
+param identityParams object
+param appConfigParams object
 param storageAccountParams object
 param logAnalyticsWorkspaceParams object
 param funcParams object
@@ -17,16 +19,26 @@ param dateNow string = utcNow('yyyy-MM-dd-hh-mm')
 
 param tags object = union(brandTags, {last_deployed:dateNow})
 
-// // Create Resource Group
-// module r_rg 'modules/resource_group/create_rg.bicep' = {
-//   name: rgName
-//   params: {
-//     rgName: rgName
-//     location: location
-//     tags:tags
-//   }
-// }
 
+// Create Identity
+module r_usr_mgd_identity 'modules/identity/create_usr_mgd_identity.bicep' = {
+  name: '${deploymentParams.enterprise_name_suffix}_${deploymentParams.global_uniqueness}_usr_mgd_identity'
+  params: {
+    deploymentParams:deploymentParams
+    identityParams:identityParams
+    tags: tags
+  }
+}
+
+//Create App Config
+module r_appConfig 'modules/app_config/create_app_config.bicep' = {
+  name: '${storageAccountParams.storageAccountNamePrefix}_${deploymentParams.global_uniqueness}_Config'
+  params: {
+    deploymentParams:deploymentParams
+    appConfigParams: appConfigParams
+    tags: tags
+  }
+}
 
 // Create the Log Analytics Workspace
 module r_logAnalyticsWorkspace 'modules/monitor/log_analytics_workspace.bicep' = {
@@ -83,6 +95,7 @@ module r_functionApp 'modules/functions/create_function.bicep' = {
   name: '${funcParams.funcNamePrefix}_${deploymentParams.global_uniqueness}_FnApp'
   params: {
     deploymentParams:deploymentParams
+    r_usr_mgd_identity_name: r_usr_mgd_identity.outputs.usr_mgd_identity_name
     funcParams: funcParams
     funcSaName: r_sa.outputs.saName_1
     saName: r_sa.outputs.saName

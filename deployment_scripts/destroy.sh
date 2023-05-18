@@ -38,14 +38,7 @@ function shiva_de_destroyer {
     echo -e "${RESET}"
     
 
-    # Delete Subscription deployments
-    echo -e "${YELLOW} Initiating Subscription Deployment Deletion ${RESET}" # Yellow
-    echo -e "${CYAN} - ${SUB_DEPLOYMENT_PREFIX}"-"${GLOBAL_UNIQUENESS} ${RESET}" # Green
-
-    az deployment sub delete \
-        --name ${SUB_DEPLOYMENT_PREFIX}"-"${GLOBAL_UNIQUENESS}"-Deployment"
-
-    echo -e "${YELLOW} Initiating Resource Group Deletion ${RESET}" # Yellow
+    echo -e "${RED} Initiating Resource Group Deletion ${RESET}" # Yellow
     echo -e "${CYAN} - ${RG_NAME} ${RESET}" # Green
 
     az deployment sub delete \

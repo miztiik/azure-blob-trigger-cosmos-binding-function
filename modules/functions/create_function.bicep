@@ -1,6 +1,6 @@
 param deploymentParams object
 param funcParams object
-param tags object = resourceGroup().tags
+param tags object
 param logAnalyticsWorkspaceId string
 param enableDiagnostics bool = true
 
@@ -11,7 +11,7 @@ param blobContainerName string
 param cosmos_db_accnt_name string
 param cosmos_db_name string
 param cosmos_db_container_name string
-
+param r_usr_mgd_identity_name string
 
 // Get Storage Account Reference
 resource r_sa 'Microsoft.Storage/storageAccounts@2021-06-01' existing = {
@@ -28,13 +28,10 @@ resource r_cosmos_db_accnt 'Microsoft.DocumentDB/databaseAccounts@2022-08-15' ex
   name: cosmos_db_accnt_name
 }
 
-// Create User-Assigned Identity
-resource r_userManagedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' = {
-  name: '${funcParams.funcNamePrefix}_identity_${deploymentParams.global_uniqueness}'
-  location: deploymentParams.location
-  tags: tags
+// Reference existing User-Assigned Identity
+resource r_userManagedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' existing = {
+  name: r_usr_mgd_identity_name
 }
-
 
 resource r_fnHostingPlan 'Microsoft.Web/serverfarms@2022-03-01' = {
   name: '${funcParams.funcAppPrefix}-fnPlan-${deploymentParams.global_uniqueness}'
@@ -52,8 +49,12 @@ resource r_fnHostingPlan 'Microsoft.Web/serverfarms@2022-03-01' = {
   }
 }
 
+var r_fnApp_name = replace('${deploymentParams.enterprise_name_suffix}-${funcParams.funcAppPrefix}-fnApp-${deploymentParams.global_uniqueness}', '_', '-')
+
+
+
 resource r_fnApp 'Microsoft.Web/sites@2021-03-01' = {
-  name: '${funcParams.funcAppPrefix}-fnApp-${deploymentParams.global_uniqueness}'
+  name: r_fnApp_name
   location: deploymentParams.location
   kind: 'functionapp,linux'
   tags: tags

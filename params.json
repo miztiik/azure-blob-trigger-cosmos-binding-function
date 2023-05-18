@@ -5,10 +5,21 @@
     "deploymentParams": {
       "value": {
         "location": "northeurope",
-        "global_uniqueness": "002",
+        "global_uniqueness": "006",
         "enterprise_name": "Miztiik_Enterprises",
-        "enterprise_name_suffix": "blob_trigger_cosmos_binding_function",
+        "enterprise_name_suffix": "blob_trigger_cosmos_binding",
         "sub_deploymnet_prefix": "Miztiik_Verse"
+      }
+    },
+    "identityParams": {
+      "value": {
+        "identityNamePrefix": "usr_mgd_identity"
+      }
+    },
+    "appConfigParams":{
+      "value":{
+        "appConfigNamePrefix": "store-events",
+        "appConfigSku": "standard"
       }
     },
     "funcParams": {
@@ -46,11 +57,12 @@
     "logAnalyticsWorkspaceParams": {
       "value": {
         "workspaceName": "lumberYard",
-        "storeEventsCustomTableName": "storeEvents",
         "retentionInDays": 32,
         "dailyQuotaGb": 2,
         "commitTier": false,
-        "automationEventsCustomTableName": "miztiikAutomationEvents"
+        "storeEventsCustomTableName": "storeEvents",
+        "automationEventsCustomTableName": "miztiikAutomationEvents",
+        "managedRunCmdCustomTableName": "miztiikRunCmdEvents"
       }
     },
     "brandTags": {

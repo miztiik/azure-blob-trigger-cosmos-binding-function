@@ -1,15 +1,21 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "metadata": {
     "_generator": {
       "name": "bicep",
       "version": "0.17.1.54307",
-      "templateHash": "8398496785990224149"
+      "templateHash": "1082428817784918646"
     }
   },
   "parameters": {
     "deploymentParams": {
+      "type": "object"
+    },
+    "identityParams": {
+      "type": "object"
+    },
+    "appConfigParams": {
       "type": "object"
     },
     "storageAccountParams": {
@@ -36,91 +42,139 @@
       "defaultValue": "[union(parameters('brandTags'), createObject('last_deployed', parameters('dateNow')))]"
     }
   },
-  "variables": {
-    "location": "[parameters('deploymentParams').location]",
-    "rgName": "[format('{0}_{1}_{2}', parameters('deploymentParams').enterprise_name, parameters('deploymentParams').enterprise_name_suffix, parameters('deploymentParams').global_uniqueness)]"
-  },
   "resources": [
     {
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2022-09-01",
-      "name": "[variables('rgName')]",
-      "location": "[deployment().location]",
+      "name": "[format('{0}_{1}_usr_mgd_identity', parameters('deploymentParams').enterprise_name_suffix, parameters('deploymentParams').global_uniqueness)]",
       "properties": {
         "expressionEvaluationOptions": {
           "scope": "inner"
         },
         "mode": "Incremental",
         "parameters": {
-          "rgName": {
-            "value": "[variables('rgName')]"
+          "deploymentParams": {
+            "value": "[parameters('deploymentParams')]"
           },
-          "location": {
-            "value": "[variables('location')]"
+          "identityParams": {
+            "value": "[parameters('identityParams')]"
           },
           "tags": {
             "value": "[parameters('tags')]"
           }
         },
         "template": {
-          "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
           "contentVersion": "1.0.0.0",
           "metadata": {
             "_generator": {
               "name": "bicep",
               "version": "0.17.1.54307",
-              "templateHash": "14109179630501476752"
+              "templateHash": "7604186415119991904"
             }
           },
           "parameters": {
-            "location": {
-              "type": "string",
-              "defaultValue": "[deployment().location]"
+            "deploymentParams": {
+              "type": "object"
+            },
+            "identityParams": {
+              "type": "object"
             },
             "tags": {
               "type": "object"
-            },
-            "rgName": {
-              "type": "string"
             }
           },
           "resources": [
             {
-              "type": "Microsoft.Resources/resourceGroups",
-              "apiVersion": "2021-04-01",
-              "name": "[parameters('rgName')]",
-              "location": "[parameters('location')]",
+              "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
+              "apiVersion": "2023-01-31",
+              "name": "[format('{0}_{1}_{2}', parameters('identityParams').identityNamePrefix, parameters('deploymentParams').enterprise_name_suffix, parameters('deploymentParams').global_uniqueness)]",
+              "location": "[parameters('deploymentParams').location]",
               "tags": "[parameters('tags')]"
             }
           ],
           "outputs": {
-            "rgName": {
+            "usr_mgd_identity_id": {
               "type": "string",
-              "value": "[parameters('rgName')]"
+              "value": "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('{0}_{1}_{2}', parameters('identityParams').identityNamePrefix, parameters('deploymentParams').enterprise_name_suffix, parameters('deploymentParams').global_uniqueness))]"
             },
-            "rgId": {
+            "usr_mgd_identity_clientId": {
               "type": "string",
-              "value": "[subscriptionResourceId('Microsoft.Resources/resourceGroups', parameters('rgName'))]"
+              "value": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('{0}_{1}_{2}', parameters('identityParams').identityNamePrefix, parameters('deploymentParams').enterprise_name_suffix, parameters('deploymentParams').global_uniqueness)), '2023-01-31').clientId]"
             },
-            "stringOutput": {
+            "usr_mgd_identity_principalId": {
               "type": "string",
-              "value": "[deployment().name]"
+              "value": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('{0}_{1}_{2}', parameters('identityParams').identityNamePrefix, parameters('deploymentParams').enterprise_name_suffix, parameters('deploymentParams').global_uniqueness)), '2023-01-31').principalId]"
             },
-            "integerOutput": {
-              "type": "int",
-              "value": "[length(environment().authentication.audiences)]"
+            "usr_mgd_identity_name": {
+              "type": "string",
+              "value": "[format('{0}_{1}_{2}', parameters('identityParams').identityNamePrefix, parameters('deploymentParams').enterprise_name_suffix, parameters('deploymentParams').global_uniqueness)]"
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2022-09-01",
+      "name": "[format('{0}_{1}_Config', parameters('storageAccountParams').storageAccountNamePrefix, parameters('deploymentParams').global_uniqueness)]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "deploymentParams": {
+            "value": "[parameters('deploymentParams')]"
+          },
+          "appConfigParams": {
+            "value": "[parameters('appConfigParams')]"
+          },
+          "tags": {
+            "value": "[parameters('tags')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.17.1.54307",
+              "templateHash": "1935747476886014878"
+            }
+          },
+          "parameters": {
+            "deploymentParams": {
+              "type": "object"
             },
-            "booleanOutput": {
-              "type": "bool",
-              "value": "[contains(deployment().name, 'Miztiik')]"
+            "appConfigParams": {
+              "type": "object"
             },
-            "arrayOutput": {
-              "type": "array",
-              "value": "[environment().authentication.audiences]"
+            "tags": {
+              "type": "object"
             },
-            "objectOutput": {
-              "type": "object",
-              "value": "[subscription()]"
+            "addRandom": {
+              "type": "string",
+              "defaultValue": "[toLower(substring(uniqueString(resourceGroup().id), 0, 6))]"
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.AppConfiguration/configurationStores",
+              "apiVersion": "2023-03-01",
+              "name": "[format('{0}-config-{1}-{2}', parameters('appConfigParams').appConfigNamePrefix, parameters('addRandom'), parameters('deploymentParams').global_uniqueness)]",
+              "location": "[parameters('deploymentParams').location]",
+              "tags": "[parameters('tags')]",
+              "sku": {
+                "name": "[parameters('appConfigParams').appConfigSku]"
+              }
+            }
+          ],
+          "outputs": {
+            "appConfigName": {
+              "type": "string",
+              "value": "[format('{0}-config-{1}-{2}', parameters('appConfigParams').appConfigNamePrefix, parameters('addRandom'), parameters('deploymentParams').global_uniqueness)]"
             }
           }
         }
@@ -130,7 +184,6 @@
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2022-09-01",
       "name": "[format('{0}_{1}_La', parameters('logAnalyticsWorkspaceParams').workspaceName, parameters('deploymentParams').global_uniqueness)]",
-      "resourceGroup": "[variables('rgName')]",
       "properties": {
         "expressionEvaluationOptions": {
           "scope": "inner"
@@ -154,7 +207,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.17.1.54307",
-              "templateHash": "3468802420156763327"
+              "templateHash": "11880034184314036637"
             }
           },
           "parameters": {
@@ -165,8 +218,7 @@
               "type": "object"
             },
             "tags": {
-              "type": "object",
-              "defaultValue": "[resourceGroup().tags]"
+              "type": "object"
             }
           },
           "resources": [
@@ -212,7 +264,7 @@
                 "retentionInDays": -1,
                 "schema": {
                   "description": "Store order events custom table",
-                  "displayName": "DOESNT-SEEM-TO-WORK-STORE-EVENTS",
+                  "displayName": "DOESNT-SEEM-TO-WORK-STORE-EVENTS-0",
                   "name": "[format('{0}{1}_CL', parameters('logAnalyticsWorkspaceParams').storeEventsCustomTableName, parameters('deploymentParams').global_uniqueness)]",
                   "columns": [
                     {
@@ -297,7 +349,7 @@
                 "retentionInDays": -1,
                 "schema": {
                   "description": "Miztiik Automation Events",
-                  "displayName": "DOESNT-SEEM-TO-WORK-AUTOMATION-EVENTS",
+                  "displayName": "DOESNT-SEEM-TO-WORK-AUTOMATION-EVENTS-1",
                   "name": "[format('{0}{1}_CL', parameters('logAnalyticsWorkspaceParams').automationEventsCustomTableName, parameters('deploymentParams').global_uniqueness)]",
                   "columns": [
                     {
@@ -310,6 +362,33 @@
                     },
                     {
                       "name": "request_id",
+                      "type": "string"
+                    }
+                  ]
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.OperationalInsights/workspaces', format('{0}-payGTier-{1}', parameters('logAnalyticsWorkspaceParams').workspaceName, parameters('deploymentParams').global_uniqueness))]"
+              ]
+            },
+            {
+              "type": "Microsoft.OperationalInsights/workspaces/tables",
+              "apiVersion": "2022-10-01",
+              "name": "[format('{0}/{1}', format('{0}-payGTier-{1}', parameters('logAnalyticsWorkspaceParams').workspaceName, parameters('deploymentParams').global_uniqueness), format('{0}{1}_CL', parameters('logAnalyticsWorkspaceParams').managedRunCmdCustomTableName, parameters('deploymentParams').global_uniqueness))]",
+              "properties": {
+                "plan": "Analytics",
+                "retentionInDays": -1,
+                "schema": {
+                  "description": "Miztiik Run Command Automation Events",
+                  "displayName": "DOESNT-SEEM-TO-WORK-AUTOMATION-EVENTS-2",
+                  "name": "[format('{0}{1}_CL', parameters('logAnalyticsWorkspaceParams').managedRunCmdCustomTableName, parameters('deploymentParams').global_uniqueness)]",
+                  "columns": [
+                    {
+                      "name": "TimeGenerated",
+                      "type": "datetime"
+                    },
+                    {
+                      "name": "RawData",
                       "type": "string"
                     }
                   ]
@@ -348,19 +427,23 @@
             "automationEventsCustomTableName": {
               "type": "string",
               "value": "[format('{0}{1}_CL', parameters('logAnalyticsWorkspaceParams').automationEventsCustomTableName, parameters('deploymentParams').global_uniqueness)]"
+            },
+            "managedRunCmdCustomTableNamePrefix": {
+              "type": "string",
+              "value": "[format('{0}{1}', parameters('logAnalyticsWorkspaceParams').managedRunCmdCustomTableName, parameters('deploymentParams').global_uniqueness)]"
+            },
+            "managedRunCmdCustomTableName": {
+              "type": "string",
+              "value": "[format('{0}{1}_CL', parameters('logAnalyticsWorkspaceParams').managedRunCmdCustomTableName, parameters('deploymentParams').global_uniqueness)]"
             }
           }
         }
-      },
-      "dependsOn": [
-        "[subscriptionResourceId('Microsoft.Resources/deployments', variables('rgName'))]"
-      ]
+      }
     },
     {
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2022-09-01",
       "name": "[format('{0}_{1}_Sa', parameters('storageAccountParams').storageAccountNamePrefix, parameters('deploymentParams').global_uniqueness)]",
-      "resourceGroup": "[variables('rgName')]",
       "properties": {
         "expressionEvaluationOptions": {
           "scope": "inner"
@@ -502,16 +585,12 @@
             }
           }
         }
-      },
-      "dependsOn": [
-        "[subscriptionResourceId('Microsoft.Resources/deployments', variables('rgName'))]"
-      ]
+      }
     },
     {
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2022-09-01",
       "name": "[format('{0}_{1}_Blob', parameters('storageAccountParams').storageAccountNamePrefix, parameters('deploymentParams').global_uniqueness)]",
-      "resourceGroup": "[variables('rgName')]",
       "properties": {
         "expressionEvaluationOptions": {
           "scope": "inner"
@@ -525,13 +604,13 @@
             "value": "[parameters('storageAccountParams')]"
           },
           "storageAccountName": {
-            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('rgName')), 'Microsoft.Resources/deployments', format('{0}_{1}_Sa', parameters('storageAccountParams').storageAccountNamePrefix, parameters('deploymentParams').global_uniqueness)), '2022-09-01').outputs.saName.value]"
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', format('{0}_{1}_Sa', parameters('storageAccountParams').storageAccountNamePrefix, parameters('deploymentParams').global_uniqueness)), '2022-09-01').outputs.saName.value]"
           },
           "storageAccountName_1": {
-            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('rgName')), 'Microsoft.Resources/deployments', format('{0}_{1}_Sa', parameters('storageAccountParams').storageAccountNamePrefix, parameters('deploymentParams').global_uniqueness)), '2022-09-01').outputs.saName_1.value]"
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', format('{0}_{1}_Sa', parameters('storageAccountParams').storageAccountNamePrefix, parameters('deploymentParams').global_uniqueness)), '2022-09-01').outputs.saName_1.value]"
           },
           "logAnalyticsWorkspaceId": {
-            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('rgName')), 'Microsoft.Resources/deployments', format('{0}_{1}_La', parameters('logAnalyticsWorkspaceParams').workspaceName, parameters('deploymentParams').global_uniqueness)), '2022-09-01').outputs.logAnalyticsPayGWorkspaceId.value]"
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', format('{0}_{1}_La', parameters('logAnalyticsWorkspaceParams').workspaceName, parameters('deploymentParams').global_uniqueness)), '2022-09-01').outputs.logAnalyticsPayGWorkspaceId.value]"
           },
           "enableDiagnostics": {
             "value": false
@@ -636,16 +715,14 @@
         }
       },
       "dependsOn": [
-        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('rgName')), 'Microsoft.Resources/deployments', format('{0}_{1}_La', parameters('logAnalyticsWorkspaceParams').workspaceName, parameters('deploymentParams').global_uniqueness))]",
-        "[subscriptionResourceId('Microsoft.Resources/deployments', variables('rgName'))]",
-        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('rgName')), 'Microsoft.Resources/deployments', format('{0}_{1}_Sa', parameters('storageAccountParams').storageAccountNamePrefix, parameters('deploymentParams').global_uniqueness))]"
+        "[resourceId('Microsoft.Resources/deployments', format('{0}_{1}_La', parameters('logAnalyticsWorkspaceParams').workspaceName, parameters('deploymentParams').global_uniqueness))]",
+        "[resourceId('Microsoft.Resources/deployments', format('{0}_{1}_Sa', parameters('storageAccountParams').storageAccountNamePrefix, parameters('deploymentParams').global_uniqueness))]"
       ]
     },
     {
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2022-09-01",
-      "name": "[format('{0}_{1}_cosmosdb', parameters('cosmosDbParams').cosmosDbNamePrefix, parameters('deploymentParams').global_uniqueness)]",
-      "resourceGroup": "[variables('rgName')]",
+      "name": "[format('{0}_{1}_cosmos_db', parameters('cosmosDbParams').cosmosDbNamePrefix, parameters('deploymentParams').global_uniqueness)]",
       "properties": {
         "expressionEvaluationOptions": {
           "scope": "inner"
@@ -658,6 +735,9 @@
           "cosmosDbParams": {
             "value": "[parameters('cosmosDbParams')]"
           },
+          "appConfigName": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', format('{0}_{1}_Config', parameters('storageAccountParams').storageAccountNamePrefix, parameters('deploymentParams').global_uniqueness)), '2022-09-01').outputs.appConfigName.value]"
+          },
           "tags": {
             "value": "[parameters('tags')]"
           }
@@ -669,7 +749,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.17.1.54307",
-              "templateHash": "1374286974622140647"
+              "templateHash": "8183313078277957580"
             }
           },
           "parameters": {
@@ -677,14 +757,17 @@
               "type": "object"
             },
             "tags": {
-              "type": "object",
-              "defaultValue": "[resourceGroup().tags]"
+              "type": "object"
             },
             "cosmosDbParams": {
               "type": "object"
+            },
+            "appConfigName": {
+              "type": "string"
             }
           },
           "variables": {
+            "cosmos_db_accnt_name": "[replace(format('{0}-db-account-{1}', parameters('deploymentParams').enterprise_name_suffix, parameters('deploymentParams').global_uniqueness), '_', '-')]",
             "databaseName": "[format('{0}-db-{1}', parameters('cosmosDbParams').cosmosDbNamePrefix, parameters('deploymentParams').global_uniqueness)]",
             "containerName": "[format('{0}-container-{1}', parameters('cosmosDbParams').cosmosDbNamePrefix, parameters('deploymentParams').global_uniqueness)]"
           },
@@ -692,7 +775,7 @@
             {
               "type": "Microsoft.DocumentDB/databaseAccounts",
               "apiVersion": "2022-08-15",
-              "name": "[format('{0}-db-account-{1}', parameters('cosmosDbParams').cosmosDbNamePrefix, parameters('deploymentParams').global_uniqueness)]",
+              "name": "[variables('cosmos_db_accnt_name')]",
               "location": "[parameters('deploymentParams').location]",
               "kind": "GlobalDocumentDB",
               "tags": "[parameters('tags')]",
@@ -722,20 +805,20 @@
             {
               "type": "Microsoft.DocumentDB/databaseAccounts/sqlDatabases",
               "apiVersion": "2021-06-15",
-              "name": "[format('{0}/{1}', format('{0}-db-account-{1}', parameters('cosmosDbParams').cosmosDbNamePrefix, parameters('deploymentParams').global_uniqueness), variables('databaseName'))]",
+              "name": "[format('{0}/{1}', variables('cosmos_db_accnt_name'), variables('databaseName'))]",
               "properties": {
                 "resource": {
                   "id": "[variables('databaseName')]"
                 }
               },
               "dependsOn": [
-                "[resourceId('Microsoft.DocumentDB/databaseAccounts', format('{0}-db-account-{1}', parameters('cosmosDbParams').cosmosDbNamePrefix, parameters('deploymentParams').global_uniqueness))]"
+                "[resourceId('Microsoft.DocumentDB/databaseAccounts', variables('cosmos_db_accnt_name'))]"
               ]
             },
             {
               "type": "Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers",
               "apiVersion": "2022-08-15",
-              "name": "[format('{0}/{1}/{2}', format('{0}-db-account-{1}', parameters('cosmosDbParams').cosmosDbNamePrefix, parameters('deploymentParams').global_uniqueness), variables('databaseName'), variables('containerName'))]",
+              "name": "[format('{0}/{1}/{2}', variables('cosmos_db_accnt_name'), variables('databaseName'), variables('containerName'))]",
               "properties": {
                 "resource": {
                   "id": "[variables('containerName')]",
@@ -765,20 +848,59 @@
                 }
               },
               "dependsOn": [
-                "[resourceId('Microsoft.DocumentDB/databaseAccounts/sqlDatabases', format('{0}-db-account-{1}', parameters('cosmosDbParams').cosmosDbNamePrefix, parameters('deploymentParams').global_uniqueness), variables('databaseName'))]"
+                "[resourceId('Microsoft.DocumentDB/databaseAccounts/sqlDatabases', variables('cosmos_db_accnt_name'), variables('databaseName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.AppConfiguration/configurationStores/keyValues",
+              "apiVersion": "2023-03-01",
+              "name": "[format('{0}/{1}', parameters('appConfigName'), 'COSMOS_DB_ACCOUNT')]",
+              "properties": {
+                "value": "[variables('cosmos_db_accnt_name')]",
+                "contentType": "text/plain",
+                "tags": "[parameters('tags')]"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.DocumentDB/databaseAccounts', variables('cosmos_db_accnt_name'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.AppConfiguration/configurationStores/keyValues",
+              "apiVersion": "2023-03-01",
+              "name": "[format('{0}/{1}', parameters('appConfigName'), 'COSMOS_DB_NAME')]",
+              "properties": {
+                "value": "[variables('databaseName')]",
+                "contentType": "text/plain",
+                "tags": "[parameters('tags')]"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.DocumentDB/databaseAccounts/sqlDatabases', variables('cosmos_db_accnt_name'), variables('databaseName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.AppConfiguration/configurationStores/keyValues",
+              "apiVersion": "2023-03-01",
+              "name": "[format('{0}/{1}', parameters('appConfigName'), 'COSMOS_DB_CONTAINER_NAME')]",
+              "properties": {
+                "value": "[variables('containerName')]",
+                "contentType": "text/plain",
+                "tags": "[parameters('tags')]"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers', variables('cosmos_db_accnt_name'), variables('databaseName'), variables('containerName'))]"
               ]
             }
           ],
           "outputs": {
-            "cosmosDbAccountName": {
+            "cosmos_db_accnt_name": {
               "type": "string",
-              "value": "[format('{0}-db-account-{1}', parameters('cosmosDbParams').cosmosDbNamePrefix, parameters('deploymentParams').global_uniqueness)]"
+              "value": "[variables('cosmos_db_accnt_name')]"
             },
-            "cosmosDbName": {
+            "cosmos_db_name": {
               "type": "string",
               "value": "[variables('databaseName')]"
             },
-            "cosmosDbContainerName": {
+            "cosmos_db_container_name": {
               "type": "string",
               "value": "[variables('containerName')]"
             }
@@ -786,14 +908,13 @@
         }
       },
       "dependsOn": [
-        "[subscriptionResourceId('Microsoft.Resources/deployments', variables('rgName'))]"
+        "[resourceId('Microsoft.Resources/deployments', format('{0}_{1}_Config', parameters('storageAccountParams').storageAccountNamePrefix, parameters('deploymentParams').global_uniqueness))]"
       ]
     },
     {
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2022-09-01",
       "name": "[format('{0}_{1}_FnApp', parameters('funcParams').funcNamePrefix, parameters('deploymentParams').global_uniqueness)]",
-      "resourceGroup": "[variables('rgName')]",
       "properties": {
         "expressionEvaluationOptions": {
           "scope": "inner"
@@ -803,29 +924,32 @@
           "deploymentParams": {
             "value": "[parameters('deploymentParams')]"
           },
+          "r_usr_mgd_identity_name": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', format('{0}_{1}_usr_mgd_identity', parameters('deploymentParams').enterprise_name_suffix, parameters('deploymentParams').global_uniqueness)), '2022-09-01').outputs.usr_mgd_identity_name.value]"
+          },
           "funcParams": {
             "value": "[parameters('funcParams')]"
           },
           "funcSaName": {
-            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('rgName')), 'Microsoft.Resources/deployments', format('{0}_{1}_Sa', parameters('storageAccountParams').storageAccountNamePrefix, parameters('deploymentParams').global_uniqueness)), '2022-09-01').outputs.saName_1.value]"
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', format('{0}_{1}_Sa', parameters('storageAccountParams').storageAccountNamePrefix, parameters('deploymentParams').global_uniqueness)), '2022-09-01').outputs.saName_1.value]"
           },
           "saName": {
-            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('rgName')), 'Microsoft.Resources/deployments', format('{0}_{1}_Sa', parameters('storageAccountParams').storageAccountNamePrefix, parameters('deploymentParams').global_uniqueness)), '2022-09-01').outputs.saName.value]"
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', format('{0}_{1}_Sa', parameters('storageAccountParams').storageAccountNamePrefix, parameters('deploymentParams').global_uniqueness)), '2022-09-01').outputs.saName.value]"
           },
           "blobContainerName": {
-            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('rgName')), 'Microsoft.Resources/deployments', format('{0}_{1}_Blob', parameters('storageAccountParams').storageAccountNamePrefix, parameters('deploymentParams').global_uniqueness)), '2022-09-01').outputs.blobContainerName.value]"
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', format('{0}_{1}_Blob', parameters('storageAccountParams').storageAccountNamePrefix, parameters('deploymentParams').global_uniqueness)), '2022-09-01').outputs.blobContainerName.value]"
           },
-          "cosmosDbAccountName": {
-            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('rgName')), 'Microsoft.Resources/deployments', format('{0}_{1}_cosmosdb', parameters('cosmosDbParams').cosmosDbNamePrefix, parameters('deploymentParams').global_uniqueness)), '2022-09-01').outputs.cosmosDbAccountName.value]"
+          "cosmos_db_accnt_name": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', format('{0}_{1}_cosmos_db', parameters('cosmosDbParams').cosmosDbNamePrefix, parameters('deploymentParams').global_uniqueness)), '2022-09-01').outputs.cosmos_db_accnt_name.value]"
           },
-          "cosmosDbName": {
-            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('rgName')), 'Microsoft.Resources/deployments', format('{0}_{1}_cosmosdb', parameters('cosmosDbParams').cosmosDbNamePrefix, parameters('deploymentParams').global_uniqueness)), '2022-09-01').outputs.cosmosDbName.value]"
+          "cosmos_db_name": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', format('{0}_{1}_cosmos_db', parameters('cosmosDbParams').cosmosDbNamePrefix, parameters('deploymentParams').global_uniqueness)), '2022-09-01').outputs.cosmos_db_name.value]"
           },
-          "cosmosDbContainerName": {
-            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('rgName')), 'Microsoft.Resources/deployments', format('{0}_{1}_cosmosdb', parameters('cosmosDbParams').cosmosDbNamePrefix, parameters('deploymentParams').global_uniqueness)), '2022-09-01').outputs.cosmosDbContainerName.value]"
+          "cosmos_db_container_name": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', format('{0}_{1}_cosmos_db', parameters('cosmosDbParams').cosmosDbNamePrefix, parameters('deploymentParams').global_uniqueness)), '2022-09-01').outputs.cosmos_db_container_name.value]"
           },
           "logAnalyticsWorkspaceId": {
-            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('rgName')), 'Microsoft.Resources/deployments', format('{0}_{1}_La', parameters('logAnalyticsWorkspaceParams').workspaceName, parameters('deploymentParams').global_uniqueness)), '2022-09-01').outputs.logAnalyticsPayGWorkspaceId.value]"
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', format('{0}_{1}_La', parameters('logAnalyticsWorkspaceParams').workspaceName, parameters('deploymentParams').global_uniqueness)), '2022-09-01').outputs.logAnalyticsPayGWorkspaceId.value]"
           },
           "enableDiagnostics": {
             "value": true
@@ -841,7 +965,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.17.1.54307",
-              "templateHash": "1551952728696993355"
+              "templateHash": "12488823334491144129"
             }
           },
           "parameters": {
@@ -852,8 +976,7 @@
               "type": "object"
             },
             "tags": {
-              "type": "object",
-              "defaultValue": "[resourceGroup().tags]"
+              "type": "object"
             },
             "logAnalyticsWorkspaceId": {
               "type": "string"
@@ -871,13 +994,16 @@
             "blobContainerName": {
               "type": "string"
             },
-            "cosmosDbAccountName": {
+            "cosmos_db_accnt_name": {
               "type": "string"
             },
-            "cosmosDbName": {
+            "cosmos_db_name": {
               "type": "string"
             },
-            "cosmosDbContainerName": {
+            "cosmos_db_container_name": {
+              "type": "string"
+            },
+            "r_usr_mgd_identity_name": {
               "type": "string"
             },
             "blobOwnerRoleId": {
@@ -887,20 +1013,14 @@
           },
           "variables": {
             "$fxv#0": "import logging\nimport json\nimport datetime\nimport os\nimport random\nimport uuid\n\nimport azure.functions as func\n\ndef main(event: func.EventGridEvent, miztProc: func.InputStream, outputBlob: func.Out[str], doc: func.Out[func.Document], context: func.Context) -> None:\n    get_req_body = None\n    body_blob_name = None\n    recv_blob_name = None\n\n    COSMOS_DB_URL = os.getenv(\"COSMOS_DB_URL\").rstrip('/')\n    COSMOS_DB_NAME = os.getenv(\"COSMOS_DB_NAME\", \"store-backend-db-006\")\n    COSMOS_DB_CONTAINER_NAME =os.getenv(\"COSMOS_DB_CONTAINER_NAME\", \"store-backend-container-006\")\n    COSMOS_DB_KEY = os.getenv(\"COSMOS_DB_KEY\")\n\n    _d={}\n    try:\n        result = {\n            \"id\": event.id,\n            \"data\": event.get_json(),\n            \"topic\": event.topic,\n            \"subject\": event.subject,\n            \"event_type\": event.event_type,\n        }\n\n        logging.info(f\"Python EventGrid trigger processed an event: {json.dumps(result)}\" )\n    \n        # query_blob_name = req.params.get(\"blob_name\") # For query string\n        # # For blob_name in body\n        # get_req_body = req.get_json()\n        # body_blob_name = get_req_body.get(\"blob_name\")\n\n        # if query_blob_name:\n        #     recv_blob_name = query_blob_name\n        # elif body_blob_name:\n        #     recv_blob_name = body_blob_name\n\n        # logging.info(f\" Received Blob Name: {recv_blob_name}\")\n        _d = miztProc.read().decode(\"utf-8\")\n        _d = json.loads(_d)\n        blob_url = result['data']['url']\n        blob_name = blob_url.split('/')[-1]\n        _d[\"blob_name\"] = blob_name\n        _d[\"miztiik_event_processed\"] = True\n        _d[\"last_processed_on\"] = datetime.datetime.now().isoformat()\n        logging.info(f\"BLOB DATA: {json.dumps(_d)}\")\n\n        # Upload to Blob Storage\n        outputBlob.set(str(_d)) # Imperative to type cast to str\n        logging.info(f\"Uploaded to blob storage\")\n\n        # Injest to CosmosDB\n        doc.set(func.Document.from_json(json.dumps(_d)))\n        logging.info('injest success success')\n\n    except Exception as e:\n        logging.exception(f\"ERROR:{str(e)}\")\n\n",
+            "r_fnApp_name": "[replace(format('{0}-{1}-fnApp-{2}', parameters('deploymentParams').enterprise_name_suffix, parameters('funcParams').funcAppPrefix, parameters('deploymentParams').global_uniqueness), '_', '-')]",
             "storageBlobDataContributorRoleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe')]",
             "blobPermsConditionStr": "[format('((!(ActionMatches{{''Microsoft.Storage/storageAccounts/blobServices/containers/blobs/read''}}) AND !(ActionMatches{{''Microsoft.Storage/storageAccounts/blobServices/containers/blobs/write''}}) ) OR (@Resource[Microsoft.Storage/storageAccounts/blobServices/containers:name] StringEquals ''{0}''))', parameters('blobContainerName'))]",
-            "cosmosDbDataContributorRoleDefinitionId": "[resourceId('Microsoft.DocumentDB/databaseAccounts/sqlRoleDefinitions', parameters('cosmosDbAccountName'), '00000000-0000-0000-0000-000000000002')]",
-            "roleAssignmentId": "[guid('sql-role-assignment', resourceGroup().id, resourceId('Microsoft.DocumentDB/databaseAccounts', parameters('cosmosDbAccountName')))]",
+            "cosmosDbDataContributorRoleDefinitionId": "[resourceId('Microsoft.DocumentDB/databaseAccounts/sqlRoleDefinitions', parameters('cosmos_db_accnt_name'), '00000000-0000-0000-0000-000000000002')]",
+            "roleAssignmentId": "[guid('sql-role-assignment', resourceGroup().id, resourceId('Microsoft.DocumentDB/databaseAccounts', parameters('cosmos_db_accnt_name')))]",
             "cosmosContributorRoleDefId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '5bd9cd88-fe45-4216-938b-f97437e15450')]"
           },
           "resources": [
-            {
-              "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
-              "apiVersion": "2023-01-31",
-              "name": "[format('{0}_identity_{1}', parameters('funcParams').funcNamePrefix, parameters('deploymentParams').global_uniqueness)]",
-              "location": "[parameters('deploymentParams').location]",
-              "tags": "[parameters('tags')]"
-            },
             {
               "type": "Microsoft.Web/serverfarms",
               "apiVersion": "2022-03-01",
@@ -920,14 +1040,14 @@
             {
               "type": "Microsoft.Web/sites",
               "apiVersion": "2021-03-01",
-              "name": "[format('{0}-fnApp-{1}', parameters('funcParams').funcAppPrefix, parameters('deploymentParams').global_uniqueness)]",
+              "name": "[variables('r_fnApp_name')]",
               "location": "[parameters('deploymentParams').location]",
               "kind": "functionapp,linux",
               "tags": "[parameters('tags')]",
               "identity": {
                 "type": "SystemAssigned, UserAssigned",
                 "userAssignedIdentities": {
-                  "[format('{0}', resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('{0}_identity_{1}', parameters('funcParams').funcNamePrefix, parameters('deploymentParams').global_uniqueness)))]": {}
+                  "[format('{0}', resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('r_usr_mgd_identity_name')))]": {}
                 }
               },
               "properties": {
@@ -944,14 +1064,13 @@
               },
               "dependsOn": [
                 "[resourceId('Microsoft.Insights/components', format('{0}-fnAppInsights-{1}', parameters('funcParams').funcNamePrefix, parameters('deploymentParams').global_uniqueness))]",
-                "[resourceId('Microsoft.Web/serverfarms', format('{0}-fnPlan-{1}', parameters('funcParams').funcAppPrefix, parameters('deploymentParams').global_uniqueness))]",
-                "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('{0}_identity_{1}', parameters('funcParams').funcNamePrefix, parameters('deploymentParams').global_uniqueness))]"
+                "[resourceId('Microsoft.Web/serverfarms', format('{0}-fnPlan-{1}', parameters('funcParams').funcAppPrefix, parameters('deploymentParams').global_uniqueness))]"
               ]
             },
             {
               "type": "Microsoft.Web/sites/config",
               "apiVersion": "2021-03-01",
-              "name": "[format('{0}/{1}', format('{0}-fnApp-{1}', parameters('funcParams').funcAppPrefix, parameters('deploymentParams').global_uniqueness), 'appsettings')]",
+              "name": "[format('{0}/{1}', variables('r_fnApp_name'), 'appsettings')]",
               "properties": {
                 "AzureWebJobsStorage": "[format('DefaultEndpointsProtocol=https;AccountName={0};EndpointSuffix={1};AccountKey={2}', parameters('funcSaName'), environment().suffixes.storage, listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('funcSaName')), '2021-06-01').keys[0].value)]",
                 "WEBSITE_CONTENTAZUREFILECONNECTIONSTRING": "[format('DefaultEndpointsProtocol=https;AccountName={0};EndpointSuffix={1};AccountKey={2}', parameters('funcSaName'), environment().suffixes.storage, listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('funcSaName')), '2021-06-01').keys[0].value)]",
@@ -963,20 +1082,20 @@
                 "WAREHOUSE_STORAGE_CONTAINER": "[parameters('blobContainerName')]",
                 "SUBSCRIPTION_ID": "[subscription().subscriptionId]",
                 "RESOURCE_GROUP": "[resourceGroup().name]",
-                "COSMOS_DB_URL": "[reference(resourceId('Microsoft.DocumentDB/databaseAccounts', parameters('cosmosDbAccountName')), '2022-08-15').documentEndpoint]",
-                "COSMOS_DB_NAME": "[parameters('cosmosDbName')]",
-                "COSMOS_DB_CONTAINER_NAME": "[parameters('cosmosDbContainerName')]",
-                "COSMOS_DB_KEY": "[listConnectionStrings(resourceId('Microsoft.DocumentDB/databaseAccounts', parameters('cosmosDbAccountName')), '2022-08-15').connectionStrings[0].connectionString]"
+                "COSMOS_DB_URL": "[reference(resourceId('Microsoft.DocumentDB/databaseAccounts', parameters('cosmos_db_accnt_name')), '2022-08-15').documentEndpoint]",
+                "COSMOS_DB_NAME": "[parameters('cosmos_db_name')]",
+                "COSMOS_DB_CONTAINER_NAME": "[parameters('cosmos_db_container_name')]",
+                "COSMOS_DB_KEY": "[listConnectionStrings(resourceId('Microsoft.DocumentDB/databaseAccounts', parameters('cosmos_db_accnt_name')), '2022-08-15').connectionStrings[0].connectionString]"
               },
               "dependsOn": [
                 "[resourceId('Microsoft.Insights/components', format('{0}-fnAppInsights-{1}', parameters('funcParams').funcNamePrefix, parameters('deploymentParams').global_uniqueness))]",
-                "[resourceId('Microsoft.Web/sites', format('{0}-fnApp-{1}', parameters('funcParams').funcAppPrefix, parameters('deploymentParams').global_uniqueness))]"
+                "[resourceId('Microsoft.Web/sites', variables('r_fnApp_name'))]"
               ]
             },
             {
               "type": "Microsoft.Web/sites/config",
               "apiVersion": "2021-03-01",
-              "name": "[format('{0}/{1}', format('{0}-fnApp-{1}', parameters('funcParams').funcAppPrefix, parameters('deploymentParams').global_uniqueness), 'logs')]",
+              "name": "[format('{0}/{1}', variables('r_fnApp_name'), 'logs')]",
               "properties": {
                 "applicationLogs": {
                   "azureBlobStorage": {
@@ -998,16 +1117,16 @@
                 }
               },
               "dependsOn": [
-                "[resourceId('Microsoft.Web/sites', format('{0}-fnApp-{1}', parameters('funcParams').funcAppPrefix, parameters('deploymentParams').global_uniqueness))]",
-                "[resourceId('Microsoft.Web/sites/config', format('{0}-fnApp-{1}', parameters('funcParams').funcAppPrefix, parameters('deploymentParams').global_uniqueness), 'appsettings')]"
+                "[resourceId('Microsoft.Web/sites', variables('r_fnApp_name'))]",
+                "[resourceId('Microsoft.Web/sites/config', variables('r_fnApp_name'), 'appsettings')]"
               ]
             },
             {
               "type": "Microsoft.Web/sites/functions",
               "apiVersion": "2022-03-01",
-              "name": "[format('{0}/{1}', format('{0}-fnApp-{1}', parameters('funcParams').funcAppPrefix, parameters('deploymentParams').global_uniqueness), format('{0}-consumer-fn', parameters('funcParams').funcNamePrefix))]",
+              "name": "[format('{0}/{1}', variables('r_fnApp_name'), format('{0}-consumer-fn', parameters('funcParams').funcNamePrefix))]",
               "properties": {
-                "invoke_url_template": "[format('https://{0}.azurewebsites.net/api/sayhi', format('{0}-fnApp-{1}', parameters('funcParams').funcAppPrefix, parameters('deploymentParams').global_uniqueness))]",
+                "invoke_url_template": "[format('https://{0}.azurewebsites.net/api/sayhi', variables('r_fnApp_name'))]",
                 "test_data": "{\"method\":\"get\",\"queryStringParams\":[{\"name\":\"miztiik-automation\",\"value\":\"yes\"}],\"headers\":[],\"body\":{\"body\":\"\"}}",
                 "config": {
                   "disabled": false,
@@ -1047,8 +1166,8 @@
                 }
               },
               "dependsOn": [
-                "[resourceId('Microsoft.Web/sites', format('{0}-fnApp-{1}', parameters('funcParams').funcAppPrefix, parameters('deploymentParams').global_uniqueness))]",
-                "[resourceId('Microsoft.Web/sites/config', format('{0}-fnApp-{1}', parameters('funcParams').funcAppPrefix, parameters('deploymentParams').global_uniqueness), 'appsettings')]"
+                "[resourceId('Microsoft.Web/sites', variables('r_fnApp_name'))]",
+                "[resourceId('Microsoft.Web/sites/config', variables('r_fnApp_name'), 'appsettings')]"
               ]
             },
             {
@@ -1058,39 +1177,33 @@
               "name": "[guid('r_storageBlobDataContributorRoleAssignment', resourceId('Microsoft.Storage/storageAccounts/blobServices/containers', split(format('{0}/default/{1}', parameters('saName'), parameters('blobContainerName')), '/')[0], split(format('{0}/default/{1}', parameters('saName'), parameters('blobContainerName')), '/')[1], split(format('{0}/default/{1}', parameters('saName'), parameters('blobContainerName')), '/')[2]), variables('storageBlobDataContributorRoleDefinitionId'))]",
               "properties": {
                 "roleDefinitionId": "[variables('storageBlobDataContributorRoleDefinitionId')]",
-                "principalId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('{0}_identity_{1}', parameters('funcParams').funcNamePrefix, parameters('deploymentParams').global_uniqueness)), '2023-01-31').principalId]",
+                "principalId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('r_usr_mgd_identity_name')), '2023-01-31').principalId]",
                 "principalType": "ServicePrincipal"
-              },
-              "dependsOn": [
-                "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('{0}_identity_{1}', parameters('funcParams').funcNamePrefix, parameters('deploymentParams').global_uniqueness))]"
-              ]
+              }
             },
             {
               "type": "Microsoft.Authorization/roleAssignments",
               "apiVersion": "2022-04-01",
               "scope": "[format('Microsoft.Storage/storageAccounts/{0}/blobServices/{1}/containers/{2}', split(format('{0}/default/{1}', parameters('saName'), parameters('blobContainerName')), '/')[0], split(format('{0}/default/{1}', parameters('saName'), parameters('blobContainerName')), '/')[1], split(format('{0}/default/{1}', parameters('saName'), parameters('blobContainerName')), '/')[2])]",
-              "name": "[guid('r_attachBlobOwnerPermsToRole', resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('{0}_identity_{1}', parameters('funcParams').funcNamePrefix, parameters('deploymentParams').global_uniqueness)), parameters('blobOwnerRoleId'))]",
+              "name": "[guid('r_attachBlobOwnerPermsToRole', resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('r_usr_mgd_identity_name')), parameters('blobOwnerRoleId'))]",
               "properties": {
                 "description": "Blob Owner Permission to ResourceGroup scope",
                 "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', parameters('blobOwnerRoleId'))]",
-                "principalId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('{0}_identity_{1}', parameters('funcParams').funcNamePrefix, parameters('deploymentParams').global_uniqueness)), '2023-01-31').principalId]",
+                "principalId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('r_usr_mgd_identity_name')), '2023-01-31').principalId]",
                 "conditionVersion": "2.0",
                 "condition": "[variables('blobPermsConditionStr')]",
                 "principalType": "ServicePrincipal"
-              },
-              "dependsOn": [
-                "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('{0}_identity_{1}', parameters('funcParams').funcNamePrefix, parameters('deploymentParams').global_uniqueness))]"
-              ]
+              }
             },
             {
               "type": "Microsoft.DocumentDB/databaseAccounts/sqlRoleDefinitions",
               "apiVersion": "2023-04-15",
-              "name": "[format('{0}/{1}', parameters('cosmosDbAccountName'), guid('r_cosmodb_customRole', resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('{0}_identity_{1}', parameters('funcParams').funcNamePrefix, parameters('deploymentParams').global_uniqueness)), resourceId('Microsoft.DocumentDB/databaseAccounts', parameters('cosmosDbAccountName'))))]",
+              "name": "[format('{0}/{1}', parameters('cosmos_db_accnt_name'), guid('r_cosmodb_customRole', resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('r_usr_mgd_identity_name')), resourceId('Microsoft.DocumentDB/databaseAccounts', parameters('cosmos_db_accnt_name'))))]",
               "properties": {
                 "roleName": "Miztiik Custom Role to read w Cosmos DB1",
                 "type": "CustomRole",
                 "assignableScopes": [
-                  "[resourceId('Microsoft.DocumentDB/databaseAccounts', parameters('cosmosDbAccountName'))]"
+                  "[resourceId('Microsoft.DocumentDB/databaseAccounts', parameters('cosmos_db_accnt_name'))]"
                 ],
                 "permissions": [
                   {
@@ -1105,77 +1218,72 @@
                     ]
                   }
                 ]
+              }
+            },
+            {
+              "type": "Microsoft.DocumentDB/databaseAccounts/sqlRoleAssignments",
+              "apiVersion": "2021-04-15",
+              "name": "[format('{0}/{1}', parameters('cosmos_db_accnt_name'), guid(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('r_usr_mgd_identity_name')), resourceId('Microsoft.DocumentDB/databaseAccounts', parameters('cosmos_db_accnt_name')), variables('cosmosDbDataContributorRoleDefinitionId')))]",
+              "properties": {
+                "roleDefinitionId": "[resourceId('Microsoft.DocumentDB/databaseAccounts/sqlRoleDefinitions', parameters('cosmos_db_accnt_name'), guid('r_cosmodb_customRole', resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('r_usr_mgd_identity_name')), resourceId('Microsoft.DocumentDB/databaseAccounts', parameters('cosmos_db_accnt_name'))))]",
+                "scope": "[resourceId('Microsoft.DocumentDB/databaseAccounts', parameters('cosmos_db_accnt_name'))]",
+                "principalId": "[reference(resourceId('Microsoft.Web/sites', variables('r_fnApp_name')), '2021-03-01', 'full').identity.principalId]"
               },
               "dependsOn": [
-                "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('{0}_identity_{1}', parameters('funcParams').funcNamePrefix, parameters('deploymentParams').global_uniqueness))]"
+                "[resourceId('Microsoft.DocumentDB/databaseAccounts/sqlRoleDefinitions', parameters('cosmos_db_accnt_name'), guid('r_cosmodb_customRole', resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('r_usr_mgd_identity_name')), resourceId('Microsoft.DocumentDB/databaseAccounts', parameters('cosmos_db_accnt_name'))))]",
+                "[resourceId('Microsoft.Web/sites', variables('r_fnApp_name'))]"
               ]
             },
             {
               "type": "Microsoft.DocumentDB/databaseAccounts/sqlRoleAssignments",
               "apiVersion": "2021-04-15",
-              "name": "[format('{0}/{1}', parameters('cosmosDbAccountName'), guid(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('{0}_identity_{1}', parameters('funcParams').funcNamePrefix, parameters('deploymentParams').global_uniqueness)), resourceId('Microsoft.DocumentDB/databaseAccounts', parameters('cosmosDbAccountName')), variables('cosmosDbDataContributorRoleDefinitionId')))]",
+              "name": "[format('{0}/{1}', parameters('cosmos_db_accnt_name'), guid(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('r_usr_mgd_identity_name')), resourceId('Microsoft.DocumentDB/databaseAccounts', parameters('cosmos_db_accnt_name')), 'r_customRoleAssignmentToUsrIdentity'))]",
               "properties": {
-                "roleDefinitionId": "[resourceId('Microsoft.DocumentDB/databaseAccounts/sqlRoleDefinitions', parameters('cosmosDbAccountName'), guid('r_cosmodb_customRole', resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('{0}_identity_{1}', parameters('funcParams').funcNamePrefix, parameters('deploymentParams').global_uniqueness)), resourceId('Microsoft.DocumentDB/databaseAccounts', parameters('cosmosDbAccountName'))))]",
-                "scope": "[resourceId('Microsoft.DocumentDB/databaseAccounts', parameters('cosmosDbAccountName'))]",
-                "principalId": "[reference(resourceId('Microsoft.Web/sites', format('{0}-fnApp-{1}', parameters('funcParams').funcAppPrefix, parameters('deploymentParams').global_uniqueness)), '2021-03-01', 'full').identity.principalId]"
+                "roleDefinitionId": "[resourceId('Microsoft.DocumentDB/databaseAccounts/sqlRoleDefinitions', parameters('cosmos_db_accnt_name'), guid('r_cosmodb_customRole', resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('r_usr_mgd_identity_name')), resourceId('Microsoft.DocumentDB/databaseAccounts', parameters('cosmos_db_accnt_name'))))]",
+                "scope": "[resourceId('Microsoft.DocumentDB/databaseAccounts', parameters('cosmos_db_accnt_name'))]",
+                "principalId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('r_usr_mgd_identity_name')), '2023-01-31').principalId]"
               },
               "dependsOn": [
-                "[resourceId('Microsoft.DocumentDB/databaseAccounts/sqlRoleDefinitions', parameters('cosmosDbAccountName'), guid('r_cosmodb_customRole', resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('{0}_identity_{1}', parameters('funcParams').funcNamePrefix, parameters('deploymentParams').global_uniqueness)), resourceId('Microsoft.DocumentDB/databaseAccounts', parameters('cosmosDbAccountName'))))]",
-                "[resourceId('Microsoft.Web/sites', format('{0}-fnApp-{1}', parameters('funcParams').funcAppPrefix, parameters('deploymentParams').global_uniqueness))]",
-                "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('{0}_identity_{1}', parameters('funcParams').funcNamePrefix, parameters('deploymentParams').global_uniqueness))]"
-              ]
-            },
-            {
-              "type": "Microsoft.DocumentDB/databaseAccounts/sqlRoleAssignments",
-              "apiVersion": "2021-04-15",
-              "name": "[format('{0}/{1}', parameters('cosmosDbAccountName'), guid(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('{0}_identity_{1}', parameters('funcParams').funcNamePrefix, parameters('deploymentParams').global_uniqueness)), resourceId('Microsoft.DocumentDB/databaseAccounts', parameters('cosmosDbAccountName')), 'r_customRoleAssignmentToUsrIdentity'))]",
-              "properties": {
-                "roleDefinitionId": "[resourceId('Microsoft.DocumentDB/databaseAccounts/sqlRoleDefinitions', parameters('cosmosDbAccountName'), guid('r_cosmodb_customRole', resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('{0}_identity_{1}', parameters('funcParams').funcNamePrefix, parameters('deploymentParams').global_uniqueness)), resourceId('Microsoft.DocumentDB/databaseAccounts', parameters('cosmosDbAccountName'))))]",
-                "scope": "[resourceId('Microsoft.DocumentDB/databaseAccounts', parameters('cosmosDbAccountName'))]",
-                "principalId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('{0}_identity_{1}', parameters('funcParams').funcNamePrefix, parameters('deploymentParams').global_uniqueness)), '2023-01-31').principalId]"
-              },
-              "dependsOn": [
-                "[resourceId('Microsoft.DocumentDB/databaseAccounts/sqlRoleDefinitions', parameters('cosmosDbAccountName'), guid('r_cosmodb_customRole', resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('{0}_identity_{1}', parameters('funcParams').funcNamePrefix, parameters('deploymentParams').global_uniqueness)), resourceId('Microsoft.DocumentDB/databaseAccounts', parameters('cosmosDbAccountName'))))]",
-                "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('{0}_identity_{1}', parameters('funcParams').funcNamePrefix, parameters('deploymentParams').global_uniqueness))]"
+                "[resourceId('Microsoft.DocumentDB/databaseAccounts/sqlRoleDefinitions', parameters('cosmos_db_accnt_name'), guid('r_cosmodb_customRole', resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('r_usr_mgd_identity_name')), resourceId('Microsoft.DocumentDB/databaseAccounts', parameters('cosmos_db_accnt_name'))))]"
               ]
             },
             {
               "type": "Microsoft.DocumentDB/databaseAccounts/sqlRoleAssignments",
               "apiVersion": "2022-08-15",
-              "name": "[format('{0}/{1}', parameters('cosmosDbAccountName'), variables('roleAssignmentId'))]",
+              "name": "[format('{0}/{1}', parameters('cosmos_db_accnt_name'), variables('roleAssignmentId'))]",
               "properties": {
-                "principalId": "[reference(resourceId('Microsoft.Web/sites', format('{0}-fnApp-{1}', parameters('funcParams').funcAppPrefix, parameters('deploymentParams').global_uniqueness)), '2021-03-01', 'full').identity.principalId]",
-                "roleDefinitionId": "[format('/subscriptions/{0}/resourceGroups/{1}/providers/Microsoft.DocumentDB/databaseAccounts/{2}/sqlRoleDefinitions/00000000-0000-0000-0000-000000000002', subscription().subscriptionId, resourceGroup().name, parameters('cosmosDbAccountName'))]",
-                "scope": "[resourceId('Microsoft.DocumentDB/databaseAccounts', parameters('cosmosDbAccountName'))]"
+                "principalId": "[reference(resourceId('Microsoft.Web/sites', variables('r_fnApp_name')), '2021-03-01', 'full').identity.principalId]",
+                "roleDefinitionId": "[format('/subscriptions/{0}/resourceGroups/{1}/providers/Microsoft.DocumentDB/databaseAccounts/{2}/sqlRoleDefinitions/00000000-0000-0000-0000-000000000002', subscription().subscriptionId, resourceGroup().name, parameters('cosmos_db_accnt_name'))]",
+                "scope": "[resourceId('Microsoft.DocumentDB/databaseAccounts', parameters('cosmos_db_accnt_name'))]"
               },
               "dependsOn": [
-                "[resourceId('Microsoft.Web/sites', format('{0}-fnApp-{1}', parameters('funcParams').funcAppPrefix, parameters('deploymentParams').global_uniqueness))]"
+                "[resourceId('Microsoft.Web/sites', variables('r_fnApp_name'))]"
               ]
             },
             {
               "type": "Microsoft.Authorization/roleAssignments",
               "apiVersion": "2020-04-01-preview",
-              "scope": "[format('Microsoft.DocumentDB/databaseAccounts/{0}', parameters('cosmosDbAccountName'))]",
-              "name": "[guid(resourceId('Microsoft.DocumentDB/databaseAccounts', parameters('cosmosDbAccountName')), format('{0}-fnApp-{1}', parameters('funcParams').funcAppPrefix, parameters('deploymentParams').global_uniqueness), variables('cosmosContributorRoleDefId'))]",
+              "scope": "[format('Microsoft.DocumentDB/databaseAccounts/{0}', parameters('cosmos_db_accnt_name'))]",
+              "name": "[guid(resourceId('Microsoft.DocumentDB/databaseAccounts', parameters('cosmos_db_accnt_name')), variables('r_fnApp_name'), variables('cosmosContributorRoleDefId'))]",
               "properties": {
-                "principalId": "[reference(resourceId('Microsoft.Web/sites', format('{0}-fnApp-{1}', parameters('funcParams').funcAppPrefix, parameters('deploymentParams').global_uniqueness)), '2021-03-01', 'full').identity.principalId]",
+                "principalId": "[reference(resourceId('Microsoft.Web/sites', variables('r_fnApp_name')), '2021-03-01', 'full').identity.principalId]",
                 "principalType": "ServicePrincipal",
                 "roleDefinitionId": "[variables('cosmosContributorRoleDefId')]"
               },
               "dependsOn": [
-                "[resourceId('Microsoft.Web/sites', format('{0}-fnApp-{1}', parameters('funcParams').funcAppPrefix, parameters('deploymentParams').global_uniqueness))]"
+                "[resourceId('Microsoft.Web/sites', variables('r_fnApp_name'))]"
               ]
             },
             {
               "type": "Microsoft.Web/sites/hostNameBindings",
               "apiVersion": "2022-03-01",
-              "name": "[format('{0}/{1}', format('{0}-fnApp-{1}', parameters('funcParams').funcAppPrefix, parameters('deploymentParams').global_uniqueness), format('{0}.azurewebsites.net', format('{0}-fnApp-{1}', parameters('funcParams').funcAppPrefix, parameters('deploymentParams').global_uniqueness)))]",
+              "name": "[format('{0}/{1}', variables('r_fnApp_name'), format('{0}.azurewebsites.net', variables('r_fnApp_name')))]",
               "properties": {
-                "siteName": "[format('{0}-fnApp-{1}', parameters('funcParams').funcAppPrefix, parameters('deploymentParams').global_uniqueness)]",
+                "siteName": "[variables('r_fnApp_name')]",
                 "hostNameType": "Verified"
               },
               "dependsOn": [
-                "[resourceId('Microsoft.Web/sites', format('{0}-fnApp-{1}', parameters('funcParams').funcAppPrefix, parameters('deploymentParams').global_uniqueness))]"
+                "[resourceId('Microsoft.Web/sites', variables('r_fnApp_name'))]"
               ]
             },
             {
@@ -1197,7 +1305,7 @@
               "condition": "[parameters('enableDiagnostics')]",
               "type": "Microsoft.Insights/diagnosticSettings",
               "apiVersion": "2021-05-01-preview",
-              "scope": "[format('Microsoft.Web/sites/{0}', format('{0}-fnApp-{1}', parameters('funcParams').funcAppPrefix, parameters('deploymentParams').global_uniqueness))]",
+              "scope": "[format('Microsoft.Web/sites/{0}', variables('r_fnApp_name'))]",
               "name": "[format('{0}-logs-{1}', parameters('funcParams').funcNamePrefix, parameters('deploymentParams').global_uniqueness)]",
               "properties": {
                 "workspaceId": "[parameters('logAnalyticsWorkspaceId')]",
@@ -1215,43 +1323,42 @@
                 ]
               },
               "dependsOn": [
-                "[resourceId('Microsoft.Web/sites', format('{0}-fnApp-{1}', parameters('funcParams').funcAppPrefix, parameters('deploymentParams').global_uniqueness))]"
+                "[resourceId('Microsoft.Web/sites', variables('r_fnApp_name'))]"
               ]
             }
           ],
           "outputs": {
             "fnAppName": {
               "type": "string",
-              "value": "[format('{0}-fnApp-{1}', parameters('funcParams').funcAppPrefix, parameters('deploymentParams').global_uniqueness)]"
+              "value": "[variables('r_fnApp_name')]"
             },
             "fnIdentity": {
               "type": "string",
-              "value": "[reference(resourceId('Microsoft.Web/sites', format('{0}-fnApp-{1}', parameters('funcParams').funcAppPrefix, parameters('deploymentParams').global_uniqueness)), '2021-03-01', 'full').identity.principalId]"
+              "value": "[reference(resourceId('Microsoft.Web/sites', variables('r_fnApp_name')), '2021-03-01', 'full').identity.principalId]"
             },
             "fnAppUrl": {
               "type": "string",
-              "value": "[reference(resourceId('Microsoft.Web/sites', format('{0}-fnApp-{1}', parameters('funcParams').funcAppPrefix, parameters('deploymentParams').global_uniqueness)), '2021-03-01').defaultHostName]"
+              "value": "[reference(resourceId('Microsoft.Web/sites', variables('r_fnApp_name')), '2021-03-01').defaultHostName]"
             },
             "fnUrl": {
               "type": "string",
-              "value": "[reference(resourceId('Microsoft.Web/sites', format('{0}-fnApp-{1}', parameters('funcParams').funcAppPrefix, parameters('deploymentParams').global_uniqueness)), '2021-03-01').defaultHostName]"
+              "value": "[reference(resourceId('Microsoft.Web/sites', variables('r_fnApp_name')), '2021-03-01').defaultHostName]"
             }
           }
         }
       },
       "dependsOn": [
-        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('rgName')), 'Microsoft.Resources/deployments', format('{0}_{1}_Blob', parameters('storageAccountParams').storageAccountNamePrefix, parameters('deploymentParams').global_uniqueness))]",
-        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('rgName')), 'Microsoft.Resources/deployments', format('{0}_{1}_cosmosdb', parameters('cosmosDbParams').cosmosDbNamePrefix, parameters('deploymentParams').global_uniqueness))]",
-        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('rgName')), 'Microsoft.Resources/deployments', format('{0}_{1}_La', parameters('logAnalyticsWorkspaceParams').workspaceName, parameters('deploymentParams').global_uniqueness))]",
-        "[subscriptionResourceId('Microsoft.Resources/deployments', variables('rgName'))]",
-        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('rgName')), 'Microsoft.Resources/deployments', format('{0}_{1}_Sa', parameters('storageAccountParams').storageAccountNamePrefix, parameters('deploymentParams').global_uniqueness))]"
+        "[resourceId('Microsoft.Resources/deployments', format('{0}_{1}_Blob', parameters('storageAccountParams').storageAccountNamePrefix, parameters('deploymentParams').global_uniqueness))]",
+        "[resourceId('Microsoft.Resources/deployments', format('{0}_{1}_cosmos_db', parameters('cosmosDbParams').cosmosDbNamePrefix, parameters('deploymentParams').global_uniqueness))]",
+        "[resourceId('Microsoft.Resources/deployments', format('{0}_{1}_La', parameters('logAnalyticsWorkspaceParams').workspaceName, parameters('deploymentParams').global_uniqueness))]",
+        "[resourceId('Microsoft.Resources/deployments', format('{0}_{1}_Sa', parameters('storageAccountParams').storageAccountNamePrefix, parameters('deploymentParams').global_uniqueness))]",
+        "[resourceId('Microsoft.Resources/deployments', format('{0}_{1}_usr_mgd_identity', parameters('deploymentParams').enterprise_name_suffix, parameters('deploymentParams').global_uniqueness))]"
       ]
     },
     {
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2022-09-01",
       "name": "[format('{0}_{1}_event_grid_system_topic', parameters('funcParams').funcNamePrefix, parameters('deploymentParams').global_uniqueness)]",
-      "resourceGroup": "[variables('rgName')]",
       "properties": {
         "expressionEvaluationOptions": {
           "scope": "inner"
@@ -1265,16 +1372,16 @@
             "value": "[parameters('tags')]"
           },
           "saName": {
-            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('rgName')), 'Microsoft.Resources/deployments', format('{0}_{1}_Sa', parameters('storageAccountParams').storageAccountNamePrefix, parameters('deploymentParams').global_uniqueness)), '2022-09-01').outputs.saName.value]"
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', format('{0}_{1}_Sa', parameters('storageAccountParams').storageAccountNamePrefix, parameters('deploymentParams').global_uniqueness)), '2022-09-01').outputs.saName.value]"
           },
           "blobContainerName": {
-            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('rgName')), 'Microsoft.Resources/deployments', format('{0}_{1}_Blob', parameters('storageAccountParams').storageAccountNamePrefix, parameters('deploymentParams').global_uniqueness)), '2022-09-01').outputs.blobContainerName.value]"
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', format('{0}_{1}_Blob', parameters('storageAccountParams').storageAccountNamePrefix, parameters('deploymentParams').global_uniqueness)), '2022-09-01').outputs.blobContainerName.value]"
           },
           "funcParams": {
             "value": "[parameters('funcParams')]"
           },
           "funcAppName": {
-            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('rgName')), 'Microsoft.Resources/deployments', format('{0}_{1}_FnApp', parameters('funcParams').funcNamePrefix, parameters('deploymentParams').global_uniqueness)), '2022-09-01').outputs.fnAppName.value]"
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', format('{0}_{1}_FnApp', parameters('funcParams').funcNamePrefix, parameters('deploymentParams').global_uniqueness)), '2022-09-01').outputs.fnAppName.value]"
           }
         },
         "template": {
@@ -1360,10 +1467,9 @@
         }
       },
       "dependsOn": [
-        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('rgName')), 'Microsoft.Resources/deployments', format('{0}_{1}_Blob', parameters('storageAccountParams').storageAccountNamePrefix, parameters('deploymentParams').global_uniqueness))]",
-        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('rgName')), 'Microsoft.Resources/deployments', format('{0}_{1}_FnApp', parameters('funcParams').funcNamePrefix, parameters('deploymentParams').global_uniqueness))]",
-        "[subscriptionResourceId('Microsoft.Resources/deployments', variables('rgName'))]",
-        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('rgName')), 'Microsoft.Resources/deployments', format('{0}_{1}_Sa', parameters('storageAccountParams').storageAccountNamePrefix, parameters('deploymentParams').global_uniqueness))]"
+        "[resourceId('Microsoft.Resources/deployments', format('{0}_{1}_Blob', parameters('storageAccountParams').storageAccountNamePrefix, parameters('deploymentParams').global_uniqueness))]",
+        "[resourceId('Microsoft.Resources/deployments', format('{0}_{1}_FnApp', parameters('funcParams').funcNamePrefix, parameters('deploymentParams').global_uniqueness))]",
+        "[resourceId('Microsoft.Resources/deployments', format('{0}_{1}_Sa', parameters('storageAccountParams').storageAccountNamePrefix, parameters('deploymentParams').global_uniqueness))]"
       ]
     }
   ]

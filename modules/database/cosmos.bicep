@@ -9,7 +9,6 @@ param appConfigName string
 
 var cosmos_db_accnt_name = replace('${deploymentParams.enterprise_name_suffix}-db-account-${deploymentParams.global_uniqueness}', '_', '-')
 
-
 // Create CosmosDB Account
 resource r_cosmos_db_account 'Microsoft.DocumentDB/databaseAccounts@2022-08-15' = {
   name: cosmos_db_accnt_name
